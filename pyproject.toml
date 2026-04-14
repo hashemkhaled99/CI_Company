@@ -1,0 +1,13 @@
+[tool.ruff.lint]
+# Enable almost all rules (E: Errors, F: Pyflakes, UP: Upgrade, B: Bugbear, SIM: Simplify)
+select = ["ALL"]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 5 # Very strict complexity limit
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

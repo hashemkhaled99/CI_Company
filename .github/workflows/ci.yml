@@ -1,0 +1,134 @@
+name: Polyglot CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # -------------------------------------------------------------
+  # 1. DETECTION PHASE
+  # -------------------------------------------------------------
+  detect:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.filter.outputs.python }}
+      golang: ${{ steps.filter.outputs.golang }}
+      react: ${{ steps.filter.outputs.react }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Path Filter
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            python:
+              - '**/*.py'
+              - 'pyproject.toml'
+              - 'requirements.txt'
+            golang:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+              - '.golangci.yml'
+            react:
+              - '**/*.js'
+              - '**/*.jsx'
+              - '**/*.ts'
+              - '**/*.tsx'
+              - 'biome.json'
+              - 'package.json'
+
+  # -------------------------------------------------------------
+  # 2. VALIDATION PHASE (Parallel execution)
+  # -------------------------------------------------------------
+  
+  lint-python:
+    name: Lint Python (Ruff)
+    needs: detect
+    if: needs.detect.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Run Ruff
+        uses: astral-sh/ruff-action@v3
+
+  lint-go:
+    name: Lint Go (Strict)
+    needs: detect
+    if: needs.detect.outputs.golang == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.1'
+          cache: true
+
+      - name: Install & Run golangci-lint
+        # We compile from source to ensure compatibility with Go 1.26.1
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          $(go env GOPATH)/bin/golangci-lint run --timeout 10m
+
+  lint-react:
+    name: Lint React (Biome)
+    needs: detect
+    if: needs.detect.outputs.react == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+
+      - name: Run Biome Check
+        # 'ci' command checks formatting, linting, and organized imports
+        run: biome ci .
+
+  # -------------------------------------------------------------
+  # 3. REPORTING PHASE
+  # -------------------------------------------------------------
+  report:
+    name: CI Summary Report
+    needs: [detect, lint-python, lint-go, lint-react]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write Summary Table
+        run: |
+          echo "### 🚀 Modern Polyglot CI Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Language | Detected | Job Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|----------|------------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Python
+          if [ "${{ needs.detect.outputs.python }}" == "true" ]; then
+            echo "| 🐍 Python (Ruff) | ✅ Yes | ${{ needs.lint-python.result }} |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🐍 Python (Ruff) | ❌ No | Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Go
+          if [ "${{ needs.detect.outputs.golang }}" == "true" ]; then
+            echo "| 🐹 Go (Strict) | ✅ Yes | ${{ needs.lint-go.result }} |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🐹 Go (Strict) | ❌ No | Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # React
+          if [ "${{ needs.detect.outputs.react }}" == "true" ]; then
+            echo "| ⚛️ React (Biome) | ✅ Yes | ${{ needs.lint-react.result }} |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| ⚛️ React (Biome) | ❌ No | Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi

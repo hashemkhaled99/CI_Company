@@ -1,0 +1,53 @@
+run:
+  timeout: 10m
+  # Ensure we only lint the files changed if you want speed, 
+  # but 'run' usually lints the whole repo.
+  tests: true
+
+linters:
+  # Enable all linters as requested
+  enable-all: true
+  disable:
+    - wsl # Disabled as per your request
+
+linters-settings:
+  wsl:
+    allow-first-in-block: true
+    allow-whole-block: false
+    force-case-trailing-whitespace: 0
+  
+  depguard:
+    rules:
+      main:
+        deny:
+          - pkg: "^log$"
+            desc: "use log/slog instead"
+          - pkg: "^fmt$"
+            desc: "use fmt in development, but not in production code"
+
+  ireturn:
+    allow:
+      - anon
+      - empty
+      - error
+      - generic
+      - stdlib
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  
+  exclude-rules:
+    # Exclude generated protobuf files
+    - path: ".*\\.pb\\.go"
+      linters:
+        - typecheck
+    
+    # Specific rules for test files
+    - path: _test\.go
+      linters:
+        - gosec
+        - bodyclose
+        - noctx
+        - errcheck
+        - wrapcheck
