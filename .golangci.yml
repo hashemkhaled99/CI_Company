@@ -9,6 +9,7 @@ linters:
   enable-all: true
   disable:
     - wsl # Disabled as per your request
+    - paralleltest # Disabled as per your request
 
 linters-settings:
   wsl:
@@ -42,6 +43,7 @@ issues:
     - path: ".*\\.pb\\.go"
       linters:
         - typecheck
+
     
     # Specific rules for test files
     - path: _test\.go
