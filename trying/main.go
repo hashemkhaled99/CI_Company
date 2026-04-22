@@ -1,15 +1,24 @@
 package main
 
-import "log/slog"
+import (
+	"errors"
+	"log/slog"
+)
+
+// ErrSample represents a generic error for demonstration.
+var ErrSample = errors.New("something went wrong")
 
 func main() {
-	slog.Info("Starting the secure application...")
+	// Using slog instead of fmt/log to comply with depguard
+	slog.Info("Starting the Sijil-CI validated application...")
 
-	if err := doSomething(); err != nil {
-		slog.Error("Failed to execute", "error", err)
+	if err := performTask(); err != nil {
+		slog.Error("Task failed", "error", err)
 	}
 }
 
-func doSomething() error {
+// performTask is a compliant function that returns an error.
+func performTask() error {
+	// Simple logic to demonstrate a successful pass
 	return nil
 }
