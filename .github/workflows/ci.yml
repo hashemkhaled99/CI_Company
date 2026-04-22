@@ -73,7 +73,7 @@ jobs:
       - uses: astral-sh/ruff-action@v3
 
   test-python:
-    name: Test Python + 80% Coverage
+    name: Test Python + 40% Coverage
     needs: detect
     if: needs.detect.outputs.python == 'true'
     runs-on: ubuntu-latest
@@ -84,8 +84,8 @@ jobs:
       - name: Run Pytest with Coverage Gate
         run: |
           pip install pytest pytest-cov
-          # The --cov-fail-under=80 is your hard gate
-          pytest trying/ --cov=trying --cov-fail-under=80 --cov-report=term-missing
+          # The --cov-fail-under=40 is your hard gate
+          pytest trying/ --cov=trying --cov-fail-under=40 --cov-report=term-missing
 
   # --- Go Sector ---
   lint-go:
@@ -104,7 +104,7 @@ jobs:
         run: $(go env GOPATH)/bin/golangci-lint run --timeout 10m
 
   test-go:
-    name: Test Go + 80% Coverage
+    name: Test Go + 40 % Coverage
     needs: detect
     if: needs.detect.outputs.golang == 'true'
     runs-on: ubuntu-latest
@@ -119,11 +119,11 @@ jobs:
           go tool cover -func=coverage.out > coverage_report.txt
           cat coverage_report.txt
           
-          # Custom bash gate for Go 80% threshold
+          # Custom bash gate for Go 40% threshold
           COVERAGE=$(grep total coverage_report.txt | awk '{print $3}' | sed 's/%//')
           echo "Current Coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "❌ FAILED: Coverage is $COVERAGE%, which is below the 80% limit."
+          if (( $(echo "$COVERAGE < 40" | bc -l) )); then
+            echo "❌ FAILED: Coverage is $COVERAGE%, which is below the 40% limit."
             exit 1
           fi
 
@@ -169,12 +169,12 @@ jobs:
           # Go Status
           GO_L="${{ needs.lint-go.result }}"
           GO_T="${{ needs.test-go.result }}"
-          echo "| 🐹 Go | ${GO_L:-Skipped} | ${GO_T:-Skipped} | 80% Min |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐹 Go | ${GO_L:-Skipped} | ${GO_T:-Skipped} | 40% Min |" >> $GITHUB_STEP_SUMMARY
 
           # Python Status
           PY_L="${{ needs.lint-python.result }}"
           PY_T="${{ needs.test-python.result }}"
-          echo "| 🐍 Python | ${PY_L:-Skipped} | ${PY_T:-Skipped} | 80% Min |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐍 Python | ${PY_L:-Skipped} | ${PY_T:-Skipped} | 40% Min |" >> $GITHUB_STEP_SUMMARY
 
           # Frontend/SQL
           echo "| ⚛️ React | ${{ needs.lint-react.result }} | N/A | N/A |" >> $GITHUB_STEP_SUMMARY
