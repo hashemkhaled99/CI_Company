@@ -1,13 +1,10 @@
-"""Unit tests for the good_logic module."""
+"""Tests for the logic module."""
+from trying.logic import validate_score
 
-from trying.good_logic import calculate_things
+def test_validate_score_valid() -> None:
+    """Test that valid scores return True."""
+    assert validate_score(50) is True  # noqa: S101
 
-
-def test_calculate_things_success() -> None:
-    """Verify that calculate_things returns True for the target sum."""
-    assert calculate_things(7, 7) is True  # noqa: S101
-
-
-def test_calculate_things_failure() -> None:
-    """Verify that calculate_things returns False for incorrect sums."""
-    assert calculate_things(1, 1) is False  # noqa: S101
+def test_validate_score_invalid() -> None:
+    """Test that out-of-bounds scores return False."""
+    assert validate_score(150) is False  # noqa: S101

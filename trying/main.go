@@ -1,28 +1,18 @@
 package main
 
 import (
-	"context"
 	"log/slog"
-	"os"
 )
 
-func main() {
-	// Initialize structured logger.
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-
-	ctx := context.Background()
-	slog.InfoContext(ctx, "Sijil-CI: Starting compliant service")
-
-	if err := runSystemCheck(); err != nil {
-		slog.ErrorContext(ctx, "Check failed", "error", err)
-		os.Exit(1)
+// CalculateStatus needs to be here for the test to find it!
+func CalculateStatus(score int) string {
+	if score > 50 {
+		return "Healthy"
 	}
+	return "Warning"
 }
 
-// runSystemCheck performs a simple health check.
-func runSystemCheck() error {
-	slog.Info("Performing health check...")
-
-	return nil
+func main() {
+	status := CalculateStatus(100)
+	slog.Info("System Status", "value", status)
 }
