@@ -128,6 +128,7 @@ jobs:
           working-directory: trying
           args: --timeout=10m
 
+          
   lint-react:
     name: Lint React (Biome)
     needs: detect
