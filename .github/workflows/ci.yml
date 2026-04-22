@@ -114,21 +114,22 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Go
+      - name: Setup Go (Targeting 1.26.1)
         uses: actions/setup-go@v5
         with:
           go-version: '1.26.1'
           cache: true
 
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          # SMART FIX: Tells the linter to operate inside the 'trying' folder
-          working-directory: trying
-          args: --timeout=10m
+      - name: Install golangci-lint from source
+        # This compiles the linter using your 1.26.1 compiler
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-          
+      - name: Run golangci-lint
+        working-directory: trying
+        run: |
+          # Use the freshly compiled binary in the GOPATH
+          $(go env GOPATH)/bin/golangci-lint run --timeout 10m
+
   lint-react:
     name: Lint React (Biome)
     needs: detect
