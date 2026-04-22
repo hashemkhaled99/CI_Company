@@ -21,129 +21,122 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Path Filter
         uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
-            python:
-              - '**/*.py'
-              - 'pyproject.toml'
-              - 'requirements.txt'
-            golang:
-              - '**/*.go'
-              - 'go.mod'
-              - 'go.sum'
-              - '.golangci.yml'
-            react:
-              - '**/*.js'
-              - '**/*.jsx'
-              - '**/*.ts'
-              - '**/*.tsx'
-              - 'biome.json'
-              - 'package.json'
-            sql:
-              - '**/*.sql'
-              - '.sqlfluff'
+            python: ['**/*.py', 'pyproject.toml', 'requirements.txt']
+            golang: ['**/*.go', '**/go.mod', '**/go.sum', '.golangci.yml']
+            react: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', 'biome.json', 'package.json']
+            sql: ['**/*.sql', '.sqlfluff']
 
   # -------------------------------------------------------------
-  # 2. VALIDATION & SECURITY PHASE (Parallel execution)
+  # 2. VALIDATION & SECURITY PHASE (Parallel)
   # -------------------------------------------------------------
   
   security-scan:
     name: 🔐 Security Scan (Gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
 
   dependency-scan:
     name: 📦 Dependency Scan (Trivy)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Run Trivy Vulnerability Scanner
-        uses: aquasecurity/trivy-action@master
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          ignore-unfixed: true
-          format: 'table'
           severity: 'HIGH,CRITICAL'
 
   sast-scan:
     name: 🧠 Deep Security (Semgrep)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Run Semgrep CI
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/default
-            p/security-audit
-            p/secrets
-          generateSarif: "1"
+      - uses: actions/checkout@v4
+      - uses: returntocorp/semgrep-action@v1
+        with: { config: "p/default p/security-audit" }
 
+  # --- Python Sector ---
   lint-python:
     name: Lint Python (Ruff)
     needs: detect
     if: needs.detect.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Run Ruff
-        uses: astral-sh/ruff-action@v3
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
 
+  test-python:
+    name: Test Python + 80% Coverage
+    needs: detect
+    if: needs.detect.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Run Pytest with Coverage Gate
+        run: |
+          pip install pytest pytest-cov
+          # The --cov-fail-under=80 is your hard gate
+          pytest trying/ --cov=trying --cov-fail-under=80 --cov-report=term-missing
+
+  # --- Go Sector ---
   lint-go:
     name: Lint Go (Strict)
     needs: detect
     if: needs.detect.outputs.golang == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Go (Targeting 1.26.1)
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.26.1'
-          cache: true
-
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.26.1', cache: true }
       - name: Install golangci-lint from source
-        # This compiles the linter using your 1.26.1 compiler
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
       - name: Run golangci-lint
         working-directory: trying
-        run: |
-          # Use the freshly compiled binary in the GOPATH
-          $(go env GOPATH)/bin/golangci-lint run --timeout 10m
+        run: $(go env GOPATH)/bin/golangci-lint run --timeout 10m
 
+  test-go:
+    name: Test Go + 80% Coverage
+    needs: detect
+    if: needs.detect.outputs.golang == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.26.1' }
+      - name: Run Tests with Coverage Gate
+        working-directory: trying
+        run: |
+          go test -v -coverprofile=coverage.out ./...
+          go tool cover -func=coverage.out > coverage_report.txt
+          cat coverage_report.txt
+          
+          # Custom bash gate for Go 80% threshold
+          COVERAGE=$(grep total coverage_report.txt | awk '{print $3}' | sed 's/%//')
+          echo "Current Coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "❌ FAILED: Coverage is $COVERAGE%, which is below the 80% limit."
+            exit 1
+          fi
+
+  # --- Web & SQL Sectors ---
   lint-react:
     name: Lint React (Biome)
     needs: detect
     if: needs.detect.outputs.react == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: latest
-      - name: Run Biome Check
-        run: biome ci .
+      - uses: actions/checkout@v4
+      - uses: biomejs/setup-biome@v2
+      - run: biome ci .
 
   lint-sql:
     name: Lint SQL (SQLFluff)
@@ -151,61 +144,44 @@ jobs:
     if: needs.detect.outputs.sql == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install & Run SQLFluff
-        run: |
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: |
           pip install sqlfluff
           sqlfluff lint . --dialect postgres
 
   # -------------------------------------------------------------
-  # 3. REPORTING PHASE
+  # 3. REPORTING PHASE (Enhanced)
   # -------------------------------------------------------------
   report:
     name: CI Summary Report
-    needs: [detect, security-scan, dependency-scan, sast-scan, lint-python, lint-go, lint-react, lint-sql]
+    needs: [detect, security-scan, dependency-scan, sast-scan, lint-python, test-python, lint-go, test-go, lint-react, lint-sql]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Write Summary Table
         run: |
-          echo "### 🚀 Sijil-CI Zero Legacy Report" >> $GITHUB_STEP_SUMMARY
-          echo "| Sector | Detected/Run | Job Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|--------------|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Sijil-CI Zero Legacy Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Sector | Lint Status | Logic Test | Coverage Gate |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------------|------------|---------------|" >> $GITHUB_STEP_SUMMARY
           
-          # Security (Always runs)
-          echo "| 🔐 Secrets (Gitleaks) | ✅ Yes | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📦 Dependencies (Trivy) | ✅ Yes | ${{ needs.dependency-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🧠 SAST (Semgrep) | ✅ Yes | ${{ needs.sast-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          # Go Status
+          GO_L="${{ needs.lint-go.result }}"
+          GO_T="${{ needs.test-go.result }}"
+          echo "| 🐹 Go | ${GO_L:-Skipped} | ${GO_T:-Skipped} | 80% Min |" >> $GITHUB_STEP_SUMMARY
 
-          # Python
-          if [ "${{ needs.detect.outputs.python }}" == "true" ]; then
-            echo "| 🐍 Python (Ruff) | ✅ Yes | ${{ needs.lint-python.result }} |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 🐍 Python (Ruff) | ❌ No | Skipped |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # Go
-          if [ "${{ needs.detect.outputs.golang }}" == "true" ]; then
-            echo "| 🐹 Go (Strict) | ✅ Yes | ${{ needs.lint-go.result }} |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 🐹 Go (Strict) | ❌ No | Skipped |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # React
-          if [ "${{ needs.detect.outputs.react }}" == "true" ]; then
-            echo "| ⚛️ React (Biome) | ✅ Yes | ${{ needs.lint-react.result }} |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| ⚛️ React (Biome) | ❌ No | Skipped |" >> $GITHUB_STEP_SUMMARY
-          fi
+          # Python Status
+          PY_L="${{ needs.lint-python.result }}"
+          PY_T="${{ needs.test-python.result }}"
+          echo "| 🐍 Python | ${PY_L:-Skipped} | ${PY_T:-Skipped} | 80% Min |" >> $GITHUB_STEP_SUMMARY
 
-          # SQL
-          if [ "${{ needs.detect.outputs.sql }}" == "true" ]; then
-            echo "| 🗄️ SQL (Fluff) | ✅ Yes | ${{ needs.lint-sql.result }} |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| 🗄️ SQL (Fluff) | ❌ No | Skipped |" >> $GITHUB_STEP_SUMMARY
-          fi
+          # Frontend/SQL
+          echo "| ⚛️ React | ${{ needs.lint-react.result }} | N/A | N/A |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🗄️ SQL | ${{ needs.lint-sql.result }} | N/A | N/A |" >> $GITHUB_STEP_SUMMARY
+
+          # Security
+          echo "#### 🔐 Security Posture" >> $GITHUB_STEP_SUMMARY
+          echo "- Secrets: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Dependencies: ${{ needs.dependency-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Deep Scan: ${{ needs.sast-scan.result }}" >> $GITHUB_STEP_SUMMARY
