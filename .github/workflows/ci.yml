@@ -33,8 +33,8 @@ jobs:
               - 'requirements.txt'
             golang:
               - '**/*.go'
-              - 'go.mod'
-              - 'go.sum'
+              - '**/go.mod'
+              - '**/go.sum'
               - '.golangci.yml'
             react:
               - '**/*.js'
@@ -113,15 +113,20 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.26.1'
           cache: true
-      - name: Install & Run golangci-lint
-        run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-          $(go env GOPATH)/bin/golangci-lint run --timeout 10m
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          # SMART FIX: Tells the linter to operate inside the 'trying' folder
+          working-directory: trying
+          args: --timeout=10m
 
   lint-react:
     name: Lint React (Biome)
