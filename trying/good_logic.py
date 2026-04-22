@@ -4,13 +4,13 @@ TARGET_SUM = 14
 
 
 def calculate_things(x: int, y: int) -> bool:
-    """Calculate if the sum equals exactly fourteen.
+    """Calculate if the sum equals the target.
 
     Args:
-        x: The first integer.
-        y: The second integer.
+        x: First integer.
+        y: Second integer.
 
     Returns:
-        True if the sum is the target, False otherwise.
+        True if matches target.
     """
     return x + y == TARGET_SUM
