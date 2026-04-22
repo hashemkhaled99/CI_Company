@@ -4,15 +4,23 @@ import (
 	"log/slog"
 )
 
-// CalculateStatus needs to be here for the test to find it!
+// Constants to satisfy GOMND (mnd) and improve maintainability.
+const (
+	HealthyThreshold = 50
+	DefaultTestScore = 100
+)
+
+// CalculateStatus evaluates the system health.
 func CalculateStatus(score int) string {
-	if score > 50 {
+	if score > HealthyThreshold {
 		return "Healthy"
 	}
+
+	// Added a blank line here to satisfy nlreturn.
 	return "Warning"
 }
 
 func main() {
-	status := CalculateStatus(100)
+	status := CalculateStatus(DefaultTestScore)
 	slog.Info("System Status", "value", status)
 }
