@@ -1,0 +1,19 @@
+title = "Sijil-CI Strict Secret Scanning"
+
+# Extend the default Gitleaks ruleset
+[extend]
+useDefault = true
+
+# Whitelist dummy secrets used exclusively for testing
+[allowlist]
+description = "Ignore testing credentials and mock data"
+regexes = [
+    '''dummy_api_key_for_testing''',
+    '''ghp_MockGitHubToken1234567890abcdefABCDEF''',
+    '''test_db_password_123'''
+]
+paths = [
+    '''^tests/.*''',
+    '''^.*_test\.go$''',   # Ignore Go test files
+    '''^__tests__/.*'''    # Ignore React/Jest test files
+]

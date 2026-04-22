@@ -1,0 +1,15 @@
+[sqlfluff]
+templater = raw
+dialect = postgres
+verbose = 0
+max_line_length = 100
+indent_unit = space
+
+[sqlfluff:indentation]
+tab_width = 4
+
+[sqlfluff:rules]
+allow_scalar_subqueries = False
+
+[sqlfluff:rules:aliasing.table]
+aliasing = explicit

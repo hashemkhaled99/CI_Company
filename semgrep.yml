@@ -1,0 +1,14 @@
+rules:
+  - id: react-no-dangerous-html
+    patterns:
+      - pattern: dangerouslySetInnerHTML={...}
+    message: "Zero Legacy Rule: Bypassing React's DOM protection is strictly prohibited to prevent XSS."
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  - id: python-no-eval
+    patterns:
+      - pattern: eval(...)
+    message: "Zero Legacy Rule: Never use eval(). It is a massive security risk for arbitrary code execution."
+    languages: [python]
+    severity: ERROR
