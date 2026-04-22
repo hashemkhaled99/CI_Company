@@ -7,11 +7,11 @@ import (
 	"os"
 )
 
-// Custom error to demonstrate proper error handling
+// ErrProcessingFailed represents a custom error to demonstrate proper error handling.
 var ErrProcessingFailed = errors.New("internal processing error")
 
 func main() {
-	// Initialize a structured JSON logger to stdout
+	// Initialize a structured JSON logger to stdout.
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
@@ -30,5 +30,6 @@ func main() {
 func runSystemCheck(ctx context.Context) error {
 	// Logic goes here. Returning nil to simulate success.
 	slog.DebugContext(ctx, "Performing health check...")
+
 	return nil
 }
