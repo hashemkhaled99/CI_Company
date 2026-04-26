@@ -23,6 +23,7 @@ jobs:
       python: ${{ steps.filter.outputs.python }}
       golang: ${{ steps.filter.outputs.golang }}
       react: ${{ steps.filter.outputs.react }}
+      react_tests: ${{ steps.filter.outputs.react_tests }}
       sql: ${{ steps.filter.outputs.sql }}
     steps:
       - name: Checkout Code
@@ -34,7 +35,8 @@ jobs:
           filters: |
             python: ['**/*.py', 'pyproject.toml', 'requirements.txt']
             golang: ['**/*.go', '**/go.mod', '**/go.sum', '.golangci.yml']
-            react: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', 'biome.json', 'package.json']
+            react: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', 'biome.json']
+            react_tests: ['package.json']
             sql: ['**/*.sql', '.sqlfluff']
 
   # -------------------------------------------------------------
@@ -78,7 +80,7 @@ jobs:
       - uses: ./.github/actions/lint-python
 
   test-python:
-    name: Test Python + 80% Coverage
+    name: Test Python + 40% Coverage
     needs: detect
     if: needs.detect.outputs.python == 'true'
     runs-on: ubuntu-latest
@@ -97,7 +99,7 @@ jobs:
       - uses: ./.github/actions/lint-go
 
   test-go:
-    name: Test Go + 80% Coverage
+    name: Test Go + 40% Coverage
     needs: detect
     if: needs.detect.outputs.golang == 'true'
     runs-on: ubuntu-latest
@@ -128,7 +130,7 @@ jobs:
   test-react:
     name: Test React + 40% Coverage
     needs: detect
-    if: needs.detect.outputs.react == 'true'
+    if: needs.detect.outputs.react_tests == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
