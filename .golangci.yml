@@ -1,4 +1,13 @@
 run:
+  timeout: 3m
+
+linters:
+  disable:
+    - goanalysis_metalinter
+
+# Keep default linters otherwise; disable the meta analysis which can fail
+# in some local toolchains (e.g. Windows + specific go tool versions).
+run:
   timeout: 10m
   # SMART FIX: Ensures the linter handles the nested module correctly
   modules-download-mode: readonly

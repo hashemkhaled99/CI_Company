@@ -1,6 +1,6 @@
-select 
+SELECT
     id,
     name,
-    (select count(*) from orders where orders.user_id = users.id)
-from users
-where status = 'active'
+    (SELECT COUNT(*) FROM orders WHERE orders.user_id = users.id) AS orders_count
+FROM users
+WHERE status = 'active';
