@@ -1,0 +1,15 @@
+name: 'Sijil React Linter'
+description: 'Runs Biome v2 for frontend code.'
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    - uses: biomejs/setup-biome@v2
+    - name: Run Biome CI
+      run: |
+        biome ci .
+      shell: bash

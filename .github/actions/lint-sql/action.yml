@@ -1,0 +1,17 @@
+name: 'Sijil SQL Linter'
+description: 'Runs SQLFluff for database queries.'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    - name: Install SQLFluff
+      run: |
+        pip install sqlfluff
+      shell: bash
+    - name: Run SQLFluff Lint
+      run: |
+        sqlfluff lint . --dialect postgres
+      shell: bash
