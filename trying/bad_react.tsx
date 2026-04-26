@@ -1,14 +1,13 @@
-import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { expect, test } from 'vitest';
+import App from './App';
 
-export function BadComponent() {
-  let title = "Hello World"; // Fails Biome: should be const
-  const unusedData = [1, 2, 3]; // Fails Biome: unused variable
+test('renders the Sijil-CI welcome message', () => {
+  render(<App />);
+  // Adjust "Welcome" to match whatever text is actually in your App.tsx
+  const linkElement = screen.getByText(/Welcome/i);
+  expect(linkElement).toBeDefined();
+});
 
-  return (
-    <div>
-      <h1>{title}</h1>
-      {/* Fails Semgrep SAST: Dangerous DOM manipulation */}
-      <div dangerouslySetInnerHTML={{ __html: "<script>alert('hack')</script>" }} />
-    </div>
-  );
-}
+// 🚨 Add a messy variable to test if Biome catches it:
+const UnusedVariable = "I should trigger a linter warning";
