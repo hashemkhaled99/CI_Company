@@ -1,0 +1,47 @@
+run:
+  timeout: 10m
+  # SMART FIX: Ensures the linter handles the nested module correctly
+  modules-download-mode: readonly
+
+linters:
+  enable-all: true
+  disable:
+    - wsl
+    - tenv        # FIXED: Removed deprecated linter (replaced by usetesting)
+    - gomodguard  # FIXED: Silenced module-check panic for nested structures
+    
+linters-settings:
+  depguard:
+    rules:
+      main:
+        deny:
+          - pkg: "^log$"
+            desc: "use log/slog instead"
+          - pkg: "^fmt$"
+            desc: "use fmt in development, but not in production code"
+
+  ireturn:
+    allow:
+      - anon
+      - empty
+      - error
+      - generic
+      - stdlib
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - path: ".*\\.pb\\.go"
+      linters:
+        - typecheck
+
+    
+    # Specific rules for test files
+    - path: _test\.go
+      linters:
+        - gosec
+        - bodyclose
+        - noctx
+        - errcheck
+        - wrapcheck
