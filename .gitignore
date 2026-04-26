@@ -1,0 +1,24 @@
+# Local binaries and archives
+ruff-bin/
+trying/golangci/
+*.zip
+*.exe
+
+# Coverage and test artifacts
+coverage.out
+coverage*
+.pytest_cache/
+__pycache__/
+
+# Python virtual envs
+.venv/
+env/
+venv/
+
+# Node
+node_modules/
+
+# Misc
+.DS_Store
+.idea/
+.vscode/

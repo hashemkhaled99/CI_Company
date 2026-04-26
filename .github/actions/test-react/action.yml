@@ -1,0 +1,17 @@
+name: 'Sijil React Tests'
+description: 'Runs Vitest with a 40% coverage gate.'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    - name: Install Dependencies
+      run: npm ci
+      shell: bash
+    - name: Run Vitest with Coverage
+      run: |
+        # Runs vitest and fails if coverage is below 40%
+        npx vitest run --coverage.enabled --coverage.thresholds.lines=40
+      shell: bash

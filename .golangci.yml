@@ -9,8 +9,7 @@ linters:
     - wsl
     - tenv        # FIXED: Removed deprecated linter (replaced by usetesting)
     - gomodguard  # FIXED: Silenced module-check panic for nested structures
-    - parralleltest # FIXED: Avoided false positives in test files
-
+    
 linters-settings:
   depguard:
     rules:
@@ -36,6 +35,9 @@ issues:
     - path: ".*\\.pb\\.go"
       linters:
         - typecheck
+
+    
+    # Specific rules for test files
     - path: _test\.go
       linters:
         - gosec

@@ -1,0 +1,30 @@
+name: 'Sijil Go Tests'
+description: 'Runs Go tests with a Race Detector and 40% coverage gate.'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v5
+      with: 
+        go-version: '1.26.1'
+        cache: true
+    - name: Download modules
+      run: |
+        cd trying || exit 0
+        if [ -f go.mod ]; then go mod download; fi
+      shell: bash
+    - name: Run Tests with Coverage Gate
+      working-directory: trying
+      run: |
+        # 🚀 NEW: Added -race and -covermode=atomic
+        go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        go tool cover -func=coverage.out > coverage_report.txt
+        cat coverage_report.txt
+        
+        COVERAGE=$(grep total coverage_report.txt | awk '{print $3}' | sed 's/%//')
+        echo "Current Coverage: $COVERAGE%"
+        
+        if (( $(echo "$COVERAGE < 40" | bc -l) )); then
+          echo "❌ FAILED: Coverage is $COVERAGE%, which is below the 40% limit."
+          exit 1
+        fi
+      shell: bash
