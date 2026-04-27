@@ -8,4 +8,3 @@ SELECT
     ) AS user_order_count
 FROM users
 WHERE status = 'active';
-
