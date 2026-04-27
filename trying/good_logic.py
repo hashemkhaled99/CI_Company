@@ -1,18 +1,19 @@
-def add_numbers(a, b):
-    """A simple function to test coverage."""
+"""Good logic module with some simple business rules."""
+
+def add_numbers(a: int, b: int) -> int:
+    """Add two numbers together."""
     return a + b
 
-def test_add_numbers():
-    assert add_numbers(1, 2) == 3
+def test_add_numbers() -> None:
+    """Test adding numbers."""
+    assert add_numbers(1, 2) == 3  # noqa: S101
 
-# 🚨 UNTESTED LOGIC BELOW
-# This will lower your coverage percentage because these lines are never called.
-def complex_business_logic(x):
+def complex_business_logic(x: int) -> str:
+    """Execute complex business logic based on a number."""
     if x > 100:
         return "Large"
-    elif x > 50:
+    if x > 50:
         return "Medium"
-    else:
-        for i in range(x):
-            print(f"Counting {i}")
-        return "Small"
+    for i in range(x):
+        print(f"Counting {i}")  # noqa: T201
+    return "Small"
