@@ -14,6 +14,6 @@ func TestCalculateStatus(t *testing.T) {
 	}
 }
 
-func TestMainFunc(t *testing.T) {
+func TestMainFunc(_ *testing.T) {
 	main()
 }
