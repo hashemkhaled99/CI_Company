@@ -1,0 +1,17 @@
+name: 'Sijil Python Linter (Ruff)'
+description: 'Runs Ruff for Python linting.'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    - name: Install Ruff
+      run: |
+        pip install ruff
+      shell: bash
+    - name: Run Ruff
+      run: |
+        ruff check .
+      shell: bash
