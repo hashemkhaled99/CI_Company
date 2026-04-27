@@ -1,0 +1,22 @@
+name: 'Sijil Python Benchmark'
+description: 'Runs Pytest benchmarks and enforces a speed limit.'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    - name: Run Python Benchmarks
+      run: |
+        TARGET_DIR=$(dirname $(find . -name "pyproject.toml" | head -n 1))
+        if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install pytest pytest-benchmark
+        pytest . --benchmark-only > bench.out
+        cat bench.out
+        # Very basic check to fail if tests take way too long (e.g., > 1s mean)
+        # Using a simple python script to parse the output if needed, or just let pytest-benchmark fail on assertions
+        python -c "import sys; slow = [line for line in open('bench.out') if ' s ' in line or ' ms ' in line]; sys.exit(1 if len(slow) > 0 and ' s ' in slow[0] else 0)" || { echo "❌ Critically slow code detected!"; exit 1; }
+        echo "✅ Benchmarks ran successfully."
+      shell: bash

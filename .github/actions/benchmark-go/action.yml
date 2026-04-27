@@ -1,0 +1,24 @@
+name: 'Sijil Go Benchmark'
+description: 'Runs Go benchmarks and enforces a speed limit.'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.26.1'
+        cache: true
+    - name: Run Go Benchmarks
+      run: |
+        TARGET_DIR=$(dirname $(find . -name "go.mod" | head -n 1))
+        if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
+        go test -bench=. -benchmem ./... > bench.out
+        cat bench.out
+        # Fail if any benchmark takes more than 5000 ns/op
+        SLOW=$(grep "ns/op" bench.out | awk '$3 > 5000 {print $0}')
+        if [ -n "$SLOW" ]; then
+          echo "❌ FAILED: Benchmarks exceeded 5000 ns/op limit:"
+          echo "$SLOW"
+          exit 1
+        fi
+        echo "✅ All benchmarks passed the speed gate."
+      shell: bash

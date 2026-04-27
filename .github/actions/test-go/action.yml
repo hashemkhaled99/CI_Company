@@ -9,12 +9,14 @@ runs:
         cache: true
     - name: Download modules
       run: |
-        cd trying || exit 0
+        TARGET_DIR=$(dirname $(find . -name "go.mod" | head -n 1))
+        if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
         if [ -f go.mod ]; then go mod download; fi
       shell: bash
     - name: Run Tests with Coverage Gate
-      working-directory: trying
       run: |
+        TARGET_DIR=$(dirname $(find . -name "go.mod" | head -n 1))
+        if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
         # 🚀 NEW: Added -race and -covermode=atomic
         go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
         go tool cover -func=coverage.out > coverage_report.txt

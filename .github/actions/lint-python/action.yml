@@ -13,5 +13,7 @@ runs:
       shell: bash
     - name: Run Ruff
       run: |
+        TARGET_DIR=$(dirname $(find . -name "pyproject.toml" | head -n 1))
+        if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
         ruff check .
       shell: bash

@@ -6,12 +6,16 @@ runs:
     - uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
     - name: Install Dependencies
-      run: npm ci
+      run: |
+        TARGET_DIR=$(dirname $(find . -name "package.json" | head -n 1))
+        if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
+        npm install
       shell: bash
     - name: Run Vitest with Coverage
       run: |
+        TARGET_DIR=$(dirname $(find . -name "package.json" | head -n 1))
+        if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
         # Runs vitest and fails if coverage is below 40%
         npx vitest run --coverage.enabled --coverage.thresholds.lines=40
       shell: bash

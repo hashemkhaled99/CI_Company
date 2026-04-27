@@ -1,16 +1,15 @@
-name: 'Sijil React Linter'
-description: 'Runs Biome v2 for frontend code.'
+name: 'Sijil React Benchmark'
+description: 'Runs Vitest benchmarks.'
 runs:
   using: "composite"
   steps:
-    - name: Setup Node
-      uses: actions/setup-node@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: '20'
-    - uses: biomejs/setup-biome@v2
-    - name: Run Biome CI
+    - name: Run React Benchmarks
       run: |
         TARGET_DIR=$(dirname $(find . -name "package.json" | head -n 1))
         if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
-        biome ci .
+        npm install
+        npx vitest bench --run
       shell: bash

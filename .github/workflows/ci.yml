@@ -151,34 +151,64 @@ jobs:
           pip install sqlfluff
           sqlfluff lint . --dialect postgres
 
+  benchmark-go:
+    name: Benchmark Go
+    needs: detect
+    if: needs.detect.outputs.golang == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/benchmark-go
+
+  benchmark-python:
+    name: Benchmark Python
+    needs: detect
+    if: needs.detect.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/benchmark-python
+
+  benchmark-react:
+    name: Benchmark React
+    needs: detect
+    if: needs.detect.outputs.react == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/benchmark-react
+
   # -------------------------------------------------------------
   # 3. REPORTING PHASE (Enhanced)
   # -------------------------------------------------------------
   report:
     name: CI Summary Report
-    needs: [detect, security-scan, dependency-scan, sast-scan, lint-python, test-python, lint-go, test-go, lint-react, lint-sql]
+    needs: [detect, security-scan, dependency-scan, sast-scan, lint-python, test-python, lint-go, test-go, lint-react, lint-sql, benchmark-go, benchmark-python, benchmark-react]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Write Summary Table
         run: |
           echo "### 🚀 Sijil-CI Zero Legacy Quality Report" >> $GITHUB_STEP_SUMMARY
-          echo "| Sector | Lint Status | Logic Test | Coverage Gate |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------------|------------|---------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Sector | Lint Status | Logic Test | Coverage Gate | Speed Gate |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------------|------------|---------------|------------|" >> $GITHUB_STEP_SUMMARY
           
           # Go Status
           GO_L="${{ needs.lint-go.result }}"
           GO_T="${{ needs.test-go.result }}"
-          echo "| 🐹 Go | ${GO_L:-Skipped} | ${GO_T:-Skipped} | 40% Min |" >> $GITHUB_STEP_SUMMARY
+          GO_B="${{ needs.benchmark-go.result }}"
+          echo "| 🐹 Go | ${GO_L:-Skipped} | ${GO_T:-Skipped} | 40% Min | ${GO_B:-Skipped} |" >> $GITHUB_STEP_SUMMARY
 
           # Python Status
           PY_L="${{ needs.lint-python.result }}"
           PY_T="${{ needs.test-python.result }}"
-          echo "| 🐍 Python | ${PY_L:-Skipped} | ${PY_T:-Skipped} | 40% Min |" >> $GITHUB_STEP_SUMMARY
+          PY_B="${{ needs.benchmark-python.result }}"
+          echo "| 🐍 Python | ${PY_L:-Skipped} | ${PY_T:-Skipped} | 40% Min | ${PY_B:-Skipped} |" >> $GITHUB_STEP_SUMMARY
 
           # Frontend/SQL
-          echo "| ⚛️ React | ${{ needs.lint-react.result }} | N/A | N/A |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🗄️ SQL | ${{ needs.lint-sql.result }} | N/A | N/A |" >> $GITHUB_STEP_SUMMARY
+          REACT_B="${{ needs.benchmark-react.result }}"
+          echo "| ⚛️ React | ${{ needs.lint-react.result }} | N/A | N/A | ${REACT_B:-Skipped} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🗄️ SQL | ${{ needs.lint-sql.result }} | N/A | N/A | N/A |" >> $GITHUB_STEP_SUMMARY
 
           # Security
           echo "#### 🔐 Security Posture" >> $GITHUB_STEP_SUMMARY
