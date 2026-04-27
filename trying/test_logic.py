@@ -5,9 +5,9 @@ from trying.logic import calculate_status
 
 def test_calculate_status_healthy() -> None:
     """Test healthy score."""
-    assert calculate_status(100) == "Healthy"
+    assert calculate_status(100) == "Healthy"  # noqa: S101
 
 
 def test_calculate_status_warning() -> None:
     """Test warning score."""
-    assert calculate_status(10) == "Warning"
+    assert calculate_status(10) == "Warning"  # noqa: S101
