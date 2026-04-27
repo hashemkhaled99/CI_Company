@@ -10,7 +10,7 @@ runs:
     - uses: biomejs/setup-biome@v2
     - name: Run Biome CI
       run: |
-        TARGET_DIR=$(dirname $(find . -name "package.json" | head -n 1))
-        if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
+        ROOT_FILE=$(find . -name "package.json" | head -n 1)
+        if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
         biome ci .
       shell: bash

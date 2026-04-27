@@ -9,7 +9,7 @@ linters:
     - wsl
     - tenv        # FIXED: Removed deprecated linter (replaced by usetesting)
     - gomodguard  # FIXED: Silenced module-check panic for nested structures
-    - parralleltest # FIXED: Avoided false positives in test files
+    - paralleltest # FIXED: Avoided false positives in test files
 
 linters-settings:
   depguard:

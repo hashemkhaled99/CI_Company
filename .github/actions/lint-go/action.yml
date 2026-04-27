@@ -9,8 +9,8 @@ runs:
         cache: true
     - name: Run golangci-lint
       run: |
-        TARGET_DIR=$(dirname $(find . -name "go.mod" | head -n 1))
-        if [ -n "$TARGET_DIR" ]; then cd "$TARGET_DIR" || exit 1; fi
+        ROOT_FILE=$(find . -name "go.mod" | head -n 1)
+        if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
         go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
         $(go env GOPATH)/bin/golangci-lint run --timeout 10m
       shell: bash
