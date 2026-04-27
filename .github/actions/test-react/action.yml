@@ -17,5 +17,13 @@ runs:
         ROOT_FILE=$(find . -name "package.json" | head -n 1)
         if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
         # Runs vitest and fails if coverage is below 40%
-        npx vitest run --coverage.enabled --coverage.thresholds.lines=40
+        npx vitest run --coverage.enabled --coverage.thresholds.lines=40 --coverage.reporter=html
       shell: bash
+
+    - name: Upload React Coverage HTML Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: react-coverage-report
+        path: '**/coverage'
+        retention-days: 7

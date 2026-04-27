@@ -20,6 +20,7 @@ runs:
         # 🚀 NEW: Added -race and -covermode=atomic
         go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
         go tool cover -func=coverage.out > coverage_report.txt
+        go tool cover -html=coverage.out -o coverage.html
         cat coverage_report.txt
         
         COVERAGE=$(grep total coverage_report.txt | awk '{print $3}' | sed 's/%//')
@@ -30,3 +31,11 @@ runs:
           exit 1
         fi
       shell: bash
+
+    - name: Upload Go Coverage HTML Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: go-coverage-report
+        path: '**/coverage.html'
+        retention-days: 7
