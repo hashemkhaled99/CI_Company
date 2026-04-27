@@ -7,4 +7,4 @@ test("renders the Sijil-CI welcome message", () => {
   // Adjust "Welcome" to match whatever text is actually in your App.tsx
   const linkElement = screen.getByText(/Welcome/i);
   expect(linkElement).toBeDefined();
-});
+});

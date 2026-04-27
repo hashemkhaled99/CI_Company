@@ -1,7 +1,7 @@
 """Tests for the logic module."""
 
-from trying.logic import validate_score
 from trying.good_logic import complex_business_logic
+from trying.logic import validate_score
 
 
 def test_validate_score_valid() -> None:

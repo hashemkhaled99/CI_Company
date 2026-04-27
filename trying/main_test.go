@@ -23,4 +23,3 @@ func TestMainFunc(t *testing.T) {
 	// Simply call main to achieve 100% coverage
 	main()
 }
-
