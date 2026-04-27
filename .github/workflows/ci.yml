@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: ./.github/actions/scan-secrets
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
 
   dependency-scan:
@@ -158,6 +158,14 @@ jobs:
       - name: Write Summary Table
         run: |
           echo "### 🚀 Sijil-CI Zero Legacy Quality Report" >> $GITHUB_STEP_SUMMARY
+          
+          # Security (Moved to top as requested)
+          echo "#### 🔐 Security Posture" >> $GITHUB_STEP_SUMMARY
+          echo "- Secrets (Gitleaks): ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Dependencies: ${{ needs.dependency-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Deep Scan: ${{ needs.sast-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
           echo "| Sector | Lint Status | Logic Test | Coverage Gate | Speed Gate |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------------|------------|---------------|------------|" >> $GITHUB_STEP_SUMMARY
           
@@ -177,9 +185,3 @@ jobs:
           REACT_B="${{ needs.benchmark-react.result }}"
           echo "| ⚛️ React | ${{ needs.lint-react.result }} | N/A | N/A | ${REACT_B:-Skipped} |" >> $GITHUB_STEP_SUMMARY
           echo "| 🗄️ SQL | ${{ needs.lint-sql.result }} | N/A | N/A | N/A |" >> $GITHUB_STEP_SUMMARY
-
-          # Security
-          echo "#### 🔐 Security Posture" >> $GITHUB_STEP_SUMMARY
-          echo "- Secrets: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Dependencies: ${{ needs.dependency-scan.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Deep Scan: ${{ needs.sast-scan.result }}" >> $GITHUB_STEP_SUMMARY
