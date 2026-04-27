@@ -1,8 +1,13 @@
-import typing
+"""Benchmark test for Python."""
 
-def test_benchmark_basic(benchmark: typing.Any) -> None:
+from pytest_benchmark.fixture import BenchmarkFixture
+
+
+def test_benchmark_basic(benchmark: BenchmarkFixture) -> None:
     """A basic benchmark test for Python."""
     def basic_operation() -> int:
         return sum(range(100))
+
     benchmark(basic_operation)
+
 
