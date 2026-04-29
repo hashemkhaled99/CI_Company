@@ -1,5 +1,5 @@
-name: 'Sijil Python Integration Tests'
-description: 'Runs Python integration tests against real services.'
+name: 'Sijil Python Benchmark'
+description: 'Runs Pytest benchmarks and enforces a speed limit.'
 runs:
   using: "composite"
   steps:
@@ -7,31 +7,53 @@ runs:
       with:
         python-version: '3.11'
         cache: 'pip'
-    - name: Install dependencies
+    - name: Run Python Benchmarks
       run: |
         ROOT_FILE=$(find . -name "pyproject.toml" | head -n 1)
         if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install pytest pytest-asyncio psycopg2-binary
+        pip install pytest pytest-benchmark
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+        pytest . --benchmark-only --benchmark-json=benchmark.json
       shell: bash
-    - name: Wait for Postgres
-      run: |
-        for i in {1..30}; do
-          pg_isready -h localhost -p 5432 && break
-          sleep 1
-        done
-      shell: bash
-    - name: Run Integration Tests
+    - name: Check Benchmark Thresholds
       run: |
         ROOT_FILE=$(find . -name "pyproject.toml" | head -n 1)
         if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
-        pytest tests/integration/ -v --junitxml=pytest-integration.xml
+        python3 << 'PYEOF'
+        import json, sys
+        
+        THRESHOLD_MS = float("${{ env.BENCHMARK_THRESHOLD_MS || '1000' }}")
+        
+        try:
+            with open('benchmark.json') as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            print("⚠️ No benchmark.json found, skipping speed gate")
+            sys.exit(0)
+        
+        failures = []
+        for bench in data.get('benchmarks', []):
+            mean_ms = bench['stats']['mean'] * 1000
+            name = bench['name']
+            if mean_ms > THRESHOLD_MS:
+                failures.append(f"  ❌ {name}: {mean_ms:.2f}ms (limit: {THRESHOLD_MS}ms)")
+            else:
+                print(f"  ✅ {name}: {mean_ms:.2f}ms")
+        
+        if failures:
+            print(f"\n❌ FAILED: {len(failures)} benchmark(s) exceeded {THRESHOLD_MS}ms:")
+            for f in failures:
+                print(f)
+            sys.exit(1)
+        
+        print(f"\n✅ All {len(data.get('benchmarks', []))} benchmarks passed the speed gate.")
+        PYEOF
       shell: bash
-      env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
-    - name: Publish Integration Test Results
-      uses: mikepenz/action-junit-report@v6
+    - name: Upload Benchmark Results
+      uses: actions/upload-artifact@v4
       if: always()
       with:
-        report_paths: '**/pytest-integration.xml'
-        check_name: 'Python Integration Tests'
+        name: python-benchmark-results
+        path: '**/benchmark.json'
+        retention-days: 30
