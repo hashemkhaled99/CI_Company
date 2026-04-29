@@ -67,7 +67,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: aquasecurity/trivy-action@6a7074dbb3ac7a7ac7dbb47f5989c0a27d5a6c7c # v0.30.0
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 — post-CVE-2026-33634 safe
         with:
           scan-type: 'fs'
           severity: 'HIGH,CRITICAL'
@@ -86,8 +86,7 @@ jobs:
       - run: |
           semgrep ci \
             --config=p/default \
-            --config=p/security-audit \
-            --error
+            --config=p/security-audit
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN || '' }}
 

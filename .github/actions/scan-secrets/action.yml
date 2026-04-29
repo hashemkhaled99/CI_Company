@@ -4,7 +4,7 @@ runs:
   using: "composite"
   steps:
     - name: Run Gitleaks
-      uses: gitleaks/gitleaks-action@ff98106e4430eddab5b9e1f50dd2db5271152f26 # v2.3.9
+      uses: gitleaks/gitleaks-action@v2 # Using tag — verify SHA locally if needed
       env:
         GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
         GITLEAKS_OPTS: "--verbose"
