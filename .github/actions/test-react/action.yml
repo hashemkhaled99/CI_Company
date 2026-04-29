@@ -1,29 +1,32 @@
 name: 'Sijil React Tests'
 description: 'Runs Vitest with a 40% coverage gate.'
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: true
+    default: '20'
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
       with:
-        node-version: '20'
+        node-version: ${{ inputs.node-version }}
     - name: Install Dependencies
       run: |
         ROOT_FILE=$(find . -name "package.json" | head -n 1)
         if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
-        npm install
+        npm ci
       shell: bash
     - name: Run Vitest with Coverage
       run: |
         ROOT_FILE=$(find . -name "package.json" | head -n 1)
         if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
-        # Runs vitest and fails if coverage is below 40%
-        npx vitest run --coverage.enabled --coverage.thresholds.lines=40 --coverage.reporter=html
+        npx vitest run --coverage.enabled --coverage.thresholds.lines=40 --coverage.reporter=html --coverage.reporter=text --coverage.reporter=json
       shell: bash
-
     - name: Upload React Coverage HTML Report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
       if: always()
       with:
-        name: react-coverage-report
+        name: react-coverage-report-node${{ inputs.node-version }}
         path: '**/coverage'
         retention-days: 7

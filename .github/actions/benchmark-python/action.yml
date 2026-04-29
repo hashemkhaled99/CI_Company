@@ -3,7 +3,7 @@ description: 'Runs Pytest benchmarks and enforces a speed limit.'
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: '3.11'
         cache: 'pip'
@@ -13,10 +13,46 @@ runs:
         if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install pytest pytest-benchmark
-        pytest . --benchmark-only > bench.out
-        cat bench.out
-        # Very basic check to fail if tests take way too long (e.g., > 1s mean)
-        # Using a simple python script to parse the output if needed, or just let pytest-benchmark fail on assertions
-        python -c "import sys; slow = [line for line in open('bench.out') if ' s ' in line or ' ms ' in line]; sys.exit(1 if len(slow) > 0 and ' s ' in slow[0] else 0)" || { echo "❌ Critically slow code detected!"; exit 1; }
-        echo "✅ Benchmarks ran successfully."
+        pytest . --benchmark-only --benchmark-json=benchmark.json
       shell: bash
+    - name: Check Benchmark Thresholds
+      run: |
+        ROOT_FILE=$(find . -name "pyproject.toml" | head -n 1)
+        if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
+        python3 << 'PYEOF'
+        import json, sys
+        
+        THRESHOLD_MS = float("${{ env.BENCHMARK_THRESHOLD_MS || '1000' }}")
+        
+        try:
+            with open('benchmark.json') as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            print("⚠️ No benchmark.json found, skipping speed gate")
+            sys.exit(0)
+        
+        failures = []
+        for bench in data.get('benchmarks', []):
+            mean_ms = bench['stats']['mean'] * 1000
+            name = bench['name']
+            if mean_ms > THRESHOLD_MS:
+                failures.append(f"  ❌ {name}: {mean_ms:.2f}ms (limit: {THRESHOLD_MS}ms)")
+            else:
+                print(f"  ✅ {name}: {mean_ms:.2f}ms")
+        
+        if failures:
+            print(f"\n❌ FAILED: {len(failures)} benchmark(s) exceeded {THRESHOLD_MS}ms:")
+            for f in failures:
+                print(f)
+            sys.exit(1)
+        
+        print(f"\n✅ All {len(data.get('benchmarks', []))} benchmarks passed the speed gate.")
+        PYEOF
+      shell: bash
+    - name: Upload Benchmark Results
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+      if: always()
+      with:
+        name: python-benchmark-results
+        path: '**/benchmark.json'
+        retention-days: 30

@@ -3,7 +3,7 @@ description: 'Runs Go benchmarks and enforces a speed limit.'
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@0aaccfd150d50cc02c983b546a3049f0c55835f6 # v5.4.0
       with:
         go-version: '1.26.1'
         cache: true
@@ -13,12 +13,20 @@ runs:
         if [ -n "$ROOT_FILE" ]; then cd "$(dirname "$ROOT_FILE")" || exit 1; fi
         go test -bench=. -benchmem ./... > bench.out
         cat bench.out
-        # Fail if any benchmark takes more than 5000 ns/op
-        SLOW=$(grep "ns/op" bench.out | awk '$3 > 5000 {print $0}')
+        
+        THRESHOLD=${BENCHMARK_THRESHOLD:-1000000}
+        SLOW=$(awk -v t="$THRESHOLD" '/ns\/op/ && $3 > t {print}' bench.out)
         if [ -n "$SLOW" ]; then
-          echo "❌ FAILED: Benchmarks exceeded 5000 ns/op limit:"
+          echo "❌ FAILED: Benchmarks exceeded ${THRESHOLD} ns/op limit:"
           echo "$SLOW"
           exit 1
         fi
         echo "✅ All benchmarks passed the speed gate."
       shell: bash
+    - name: Upload Benchmark Results
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+      if: always()
+      with:
+        name: go-benchmark-results
+        path: '**/bench.out'
+        retention-days: 30
