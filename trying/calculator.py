@@ -1,8 +1,6 @@
 """A simple calculator module with 100% coverage-friendly code."""
 
-from typing import Union
-
-Number = Union[int, float]
+Number = int | float
 
 
 def add(a: Number, b: Number) -> Number:
@@ -20,23 +18,29 @@ def multiply(a: Number, b: Number) -> Number:
     return a * b
 
 
+_DIVIDE_BY_ZERO_MSG = "Cannot divide by zero"
+
+
 def divide(a: Number, b: Number) -> Number:
     """Divide a by b."""
     if b == 0:
-        raise ValueError("Cannot divide by zero")
+        raise ValueError(_DIVIDE_BY_ZERO_MSG)
     return a / b
 
 
 def power(base: Number, exponent: Number) -> Number:
     """Raise base to the power of exponent."""
-    return base ** exponent
+    return base**exponent
+
+
+_FACTORIAL_NEGATIVE_MSG = "Factorial not defined for negative numbers"
 
 
 def factorial(n: int) -> int:
     """Calculate factorial of n."""
     if n < 0:
-        raise ValueError("Factorial not defined for negative numbers")
-    if n == 0 or n == 1:
+        raise ValueError(_FACTORIAL_NEGATIVE_MSG)
+    if n in {0, 1}:
         return 1
     result = 1
     for i in range(2, n + 1):
