@@ -2,14 +2,24 @@
 
 import pytest
 
-from calculator import (
-    add,
-    divide,
-    factorial,
-    multiply,
-    power,
-    subtract,
-)
+try:
+    from calculator import (
+        add,
+        divide,
+        factorial,
+        multiply,
+        power,
+        subtract,
+    )
+except ImportError:
+    from trying.calculator import (
+        add,
+        divide,
+        factorial,
+        multiply,
+        power,
+        subtract,
+    )
 
 
 class TestCalculator:
