@@ -67,7 +67,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 — post-CVE-2026-33634 safe
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: 'fs'
           severity: 'HIGH,CRITICAL'
@@ -362,9 +362,14 @@ jobs:
           fi
       - name: Notify on Failure
         if: failure() && github.ref == 'refs/heads/main'
-        uses: slackapi/slack-github-action@485a9d42d3a730c3a993ebb0e60a887ccfee9e91 # v2.0.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
-            {"text": "🚨 Sijil-CI failed on main: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            text: "🚨 Sijil-CI failed on main"
+            blocks:
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: "*Sijil-CI Failure*\nBranch: `${{ github.ref_name }}`\nRepo: `${{ github.repository }}`\nRun: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
